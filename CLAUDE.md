@@ -27,7 +27,7 @@ cp app/build/outputs/apk/release/app-release.apk Tooodo.apk   # deliverable kept
 - 设置 → 检查更新 (`Updater` + `InstallReceiver`) reads the latest release of the Gitee repo (`Updater.REPO` = `qqinling/tooodo`), downloads the APK attached to it, checks the sha256 from the attached `version.json`, and installs it through `PackageInstaller`. Nothing checks in the background, by design.
 - Builds before `REPO` was set (versionCode ≤ 11) can't find updates, so the first build with it has to be installed via adb.
 - A Gitee release needs a branch to point at, so the repo must have at least one pushed commit before the first `scripts/release.sh`.
-- Publish with `scripts/release.sh "更新说明"` after bumping the version. It reads the Gitee token from `~/.config/tooodo/gitee_token` and never prints it.
+- Publish with `scripts/release.sh "更新说明"` after bumping the version. It reads the Gitee token from `~/.gitee/token` and never prints it.
 - Unit tests cover only the pure date logic (`TodoStore.pendingOn/historyOn/upcomingOn`, `Dates`): `JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew testReleaseUnitTest`. Keep that logic free of Android types so it stays testable. No lint config; everything else is verified on a device or emulator (below).
 
 ## Testing on emulator / real phone

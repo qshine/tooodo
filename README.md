@@ -46,7 +46,7 @@
 ### 发布新版本
 
 1. 在 `app/build.gradle.kts` 里调高 `versionCode`（只能增加）和 `versionName`。
-2. 把 Gitee 私人令牌（`projects` 权限）放在 `~/.config/tooodo/gitee_token`。
+2. 把 Gitee 私人令牌（`projects` 权限）放在 `~/.gitee/token`。
 3. 运行：
 
 ```bash

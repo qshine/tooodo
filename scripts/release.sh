@@ -2,12 +2,12 @@
 # 打包并发布到 Gitee，手机上「设置 → 检查更新」就能拿到。
 #   scripts/release.sh "这一版的更新说明"
 # 发布前先在 app/build.gradle.kts 里调高 versionCode（和 versionName）。
-# Gitee 私人令牌放在 ~/.config/tooodo/gitee_token（需要 projects 权限），脚本不会打印它。
+# Gitee 私人令牌放在 ~/.gitee/token（需要 projects 权限），脚本不会打印它。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 NOTES="${1:?用法: scripts/release.sh \"更新说明\"}"
-TOKEN_FILE="$HOME/.config/tooodo/gitee_token"
+TOKEN_FILE="$HOME/.gitee/token"
 [ -s "$TOKEN_FILE" ] || { echo "缺少 $TOKEN_FILE" >&2; exit 1; }
 TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
 
