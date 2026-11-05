@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 哪天做：新建和编辑弹窗共用，逻辑在 DueChips。默认今天，所以没有「今天」按钮 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/due_tomorrow"
+        style="@style/Chip"
+        android:text="@string/due_tomorrow" />
+
+    <TextView
+        android:id="@+id/due_after"
+        style="@style/Chip"
+        android:text="@string/due_after_tomorrow" />
+
+    <TextView
+        android:id="@+id/due_pick"
+        style="@style/Chip"
+        android:text="@string/due_pick" />
+</LinearLayout>

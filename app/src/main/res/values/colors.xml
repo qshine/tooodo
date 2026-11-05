@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="paper">#F5F3EF</color>
+    <color name="card">#FFFFFF</color>
+    <color name="ink">#17181C</color>
+    <color name="ink_muted">#5C5F68</color>
+    <color name="ink_faded">#6E717A</color>
+    <color name="ring">#A3A6AE</color>
+    <color name="divider">#ECE9E3</color>
+    <color name="accent">#2E5BFF</color>
+    <color name="ok">#1E7A46</color>
+    <color name="night">#121318</color>
+    <color name="night_card">#1E2029</color>
+    <color name="night_button">#2A2C36</color>
+    <color name="night_ink">#F5F3EF</color>
+    <color name="night_muted">#A9ACB5</color>
+    <color name="night_accent">#4D74FF</color>
+    <color name="night_label">#8E9DFF</color>
+</resources>
