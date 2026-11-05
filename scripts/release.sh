@@ -20,7 +20,8 @@ TAG="v$NAME"
 API="https://gitee.com/api/v5/repos/$REPO"
 
 # 同一个 versionCode 不能发两次，否则手机认不出是新版本
-LATEST="$(curl -fsS "$API/releases/latest" || true)"
+# 还没有发布过时这里是 404，不算错
+LATEST="$(curl -fsS "$API/releases/latest" 2>/dev/null || true)"
 LATEST_TAG="$(printf '%s' "$LATEST" | python3 -c 'import sys,json
 try: print((json.load(sys.stdin) or {}).get("tag_name",""))
 except Exception: print("")')"
