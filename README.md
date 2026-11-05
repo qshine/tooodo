@@ -67,3 +67,7 @@ scripts/release.sh "这一版的更新说明"
 | `WatchdogJob` / `RestartReceiver` / `BootReceiver` | 进程被杀、重启、升级后把服务拉起来 |
 
 更详细的设计说明（包括各家系统后台限制的绕过方式）见 [CLAUDE.md](CLAUDE.md)。
+
+## 许可证
+
+[MIT](LICENSE)
