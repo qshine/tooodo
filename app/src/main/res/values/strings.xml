@@ -22,7 +22,7 @@
     <string name="perm_battery">忽略电池优化</string>
     <string name="perm_ok">已开启</string>
     <string name="perm_go">去开启</string>
-    <string name="perm_tip">提醒靠一个常驻通知保持运行，请不要关掉它。小米、华为、OPPO、vivo 等系统「一键清理」会强制停止应用，停止后要重新打开 Tooodo 才会恢复：建议在最近任务里给 Tooodo 加锁，并在应用详情里允许「自启动」「后台弹出界面」「锁屏显示」。</string>
+    <string name="perm_tip">提醒靠一个常驻通知保持运行，请不要关掉它。小米、华为、OPPO、vivo 等系统「一键清理」会强制停止应用，停止后要重新打开 Tooodo 才会恢复：建议在最近任务里给 Tooodo 加锁，并在应用详情里允许「自启动」「后台弹出界面」「锁屏显示」。vivo / iQOO 还要在「电池 → 后台耗电管理」里允许 Tooodo 后台高耗电。</string>
     <string name="preview">预览锁屏提醒</string>
     <string name="wake_label">还没做完</string>
     <string name="wake_count">你还有 %d 件事</string>
