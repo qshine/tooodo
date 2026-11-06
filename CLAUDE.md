@@ -7,7 +7,7 @@ Tooodo is a single-module Android app (Kotlin, plain Views/XML, no Compose): a t
 ## Repositories
 
 - Gitee (public): https://gitee.com/qqinling/tooodo.git, git remote `origin`. Its releases are also where in-app updates come from (`Updater.REPO`), so renaming or moving it breaks updates for installed builds.
-- GitHub (public mirror): https://github.com/qshine/tooodo, git remote `github`. Push to both remotes (`git push origin main && git push github main --tags`). `main` tracks `origin`. Releases and in-app updates stay on Gitee only, unless `Updater.REPO` and `scripts/release.sh` are changed.
+- GitHub (public mirror): https://github.com/qshine/tooodo, git remote `github`. Push to both remotes (`git push origin main && git push github main --tags`). `main` tracks `origin`. `scripts/release.sh` also pushes the tag to GitHub and creates a matching GitHub release with the same APK and version.json via `gh`, after the Gitee one. In-app updates still read Gitee only (`Updater.REPO`).
 
 ## Build & install
 

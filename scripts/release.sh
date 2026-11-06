@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 打包并发布到 Gitee，手机上「设置 → 检查更新」就能拿到。
+# 打包并发布到 Gitee，手机上「设置 → 检查更新」就能拿到；有 github 远程时再同步一份到 GitHub。
 #   scripts/release.sh "这一版的更新说明"
 # 发布前先在 app/build.gradle.kts 里调高 versionCode（和 versionName）。
 # Gitee 私人令牌放在 ~/.gitee/token（需要 projects 权限），脚本不会打印它。
@@ -57,3 +57,14 @@ for f in "$OUT/$APK" "$OUT/version.json"; do
   curl -fsS -X POST "$API/releases/$RELEASE_ID/attach_files" -F "access_token=$TOKEN" -F "file=@$f" > /dev/null
 done
 echo "完成：https://gitee.com/$REPO/releases/tag/$TAG"
+
+# GitHub 镜像：同样的文件再发一份（应用内更新仍只看 Gitee）。没有 github 远程或 gh 就跳过
+if git remote get-url github >/dev/null 2>&1 && command -v gh >/dev/null; then
+  GH_REPO="$(git remote get-url github | sed -E 's#(https://github.com/|git@github.com:)##; s#\.git$##')"
+  echo "同步到 GitHub $GH_REPO…"
+  git fetch -q origin "refs/tags/$TAG:refs/tags/$TAG"
+  git push -q github "$BRANCH" "refs/tags/$TAG"
+  gh release create "$TAG" -R "$GH_REPO" --verify-tag --latest --title "Tooodo $NAME" --notes "$NOTES" \
+    "$OUT/$APK" "$OUT/version.json" > /dev/null
+  echo "完成：https://github.com/$GH_REPO/releases/tag/$TAG"
+fi
