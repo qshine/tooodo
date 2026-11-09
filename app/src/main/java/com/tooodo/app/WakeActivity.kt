@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
@@ -94,6 +95,7 @@ class WakeActivity : AppCompatActivity() {
         super.onResume()
         if (isWarmUp) return
         visible = true
+        shownAt = SystemClock.elapsedRealtime()
         getSystemService(NotificationManager::class.java).cancel(ScreenWatchService.ID_WAKE)
         render()
     }
@@ -131,6 +133,10 @@ class WakeActivity : AppCompatActivity() {
         /** 界面实例是否还在（进程被杀后会重置为 false）。 */
         @Volatile
         var alive = false
+
+        /** 最近一次真正显示（非预热）的时间，elapsedRealtime。 */
+        @Volatile
+        var shownAt = 0L
 
         private const val EXTRA_WARM_UP = "warm_up"
 

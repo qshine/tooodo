@@ -16,6 +16,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -32,16 +33,24 @@ class ScreenWatchService : Service() {
     // 亮屏后用户是否已经解锁；指纹/人脸解锁很快，提醒刚弹出就被收起是正常的，不需要再兜底
     private var unlockedSinceScreenOn = false
 
+    // 本次亮屏的时间，用来判断提醒界面是否在这次亮屏后真的显示过
+    private var screenOnAt = 0L
+
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.i(TAG, "broadcast ${intent.action}")
             when (intent.action) {
                 Intent.ACTION_SCREEN_ON -> {
+                    handler.removeCallbacksAndMessages(null)
                     unlockedSinceScreenOn = false
+                    screenOnAt = SystemClock.elapsedRealtime()
                     showWakeScreen()
                 }
                 // 被杀后重启的进程里没有提醒界面了；趁熄屏（用户不在用手机）预先建好，亮屏时直接切回前台
-                Intent.ACTION_SCREEN_OFF -> if (!WakeActivity.alive) WakeActivity.warmUp(this@ScreenWatchService)
+                Intent.ACTION_SCREEN_OFF -> {
+                    handler.removeCallbacksAndMessages(null)
+                    if (!WakeActivity.alive) WakeActivity.warmUp(this@ScreenWatchService)
+                }
                 // 解锁后提醒就没用了，收起兜底通知
                 Intent.ACTION_USER_PRESENT -> {
                     unlockedSinceScreenOn = true
@@ -129,11 +138,13 @@ class ScreenWatchService : Service() {
         if (Settings.canDrawOverlays(this)) {
             startActivity(intent)
             // 部分系统（如 MIUI 的「后台弹出界面」）会静默拦截，startActivity 不报错也不显示；
-            // 稍等一下还没显示出来，就改用全屏通知兜底
+            // 稍等一下还没显示出来，就改用全屏通知兜底。
+            // 只看 visible 不够：用户在 1.5 秒内点了「知道了」时 visible 也是 false，会被误判成被拦截而再弹一次
             handler.postDelayed({
                 val screenOn = getSystemService(PowerManager::class.java).isInteractive
-                Log.i(TAG, "wake visible=${WakeActivity.visible} screenOn=$screenOn")
-                if (!WakeActivity.visible && screenOn && !unlockedSinceScreenOn) postFallback(intent, pending)
+                val shown = WakeActivity.shownAt >= screenOnAt
+                Log.i(TAG, "wake visible=${WakeActivity.visible} shown=$shown screenOn=$screenOn")
+                if (!WakeActivity.visible && !shown && screenOn && !unlockedSinceScreenOn) postFallback(intent, pending)
             }, 1500)
             return
         }
