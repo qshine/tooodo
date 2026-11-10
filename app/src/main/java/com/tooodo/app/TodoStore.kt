@@ -116,11 +116,6 @@ class TodoStore(context: Context) {
         get() = prefs.getBoolean(KEY_PERM_PROMPTED, false)
         set(v) = prefs.edit().putBoolean(KEY_PERM_PROMPTED, v).apply()
 
-    /** 是否已同意隐私政策；同意之前不启动服务、不申请任何权限。 */
-    var privacyAgreed: Boolean
-        get() = prefs.getBoolean(KEY_PRIVACY_AGREED, false)
-        set(v) = prefs.edit().putBoolean(KEY_PRIVACY_AGREED, v).apply()
-
     private fun save(todos: List<Todo>) {
         val arr = JSONArray()
         todos.forEach {
@@ -154,7 +149,6 @@ class TodoStore(context: Context) {
         private const val KEY_WAKE = "wake_enabled"
         private const val KEY_SKIP_EMPTY = "skip_when_empty"
         private const val KEY_PERM_PROMPTED = "perm_prompted"
-        private const val KEY_PRIVACY_AGREED = "privacy_agreed"
 
         fun today(): Long = LocalDate.now().toEpochDay()
 

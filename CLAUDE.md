@@ -13,20 +13,13 @@ Tooodo is a single-module Android app (Kotlin, plain Views/XML, no Compose): a t
 
 The toolchain was installed via Homebrew; nothing is on PATH by default.
 
-Two product flavors (dimension `channel`), same `applicationId`, same version numbers:
-
-- **`gitee`**: the sideloaded build with in-app updates (`Updater`, `UpdateSection`, `InstallReceiver`, `INTERNET` and `REQUEST_INSTALL_PACKAGES` all live in `src/gitee/`). Signed with the debug key.
-- **`oppo`**: the app-store build (OPPO 软件商店). No network permission, no self-update (stores reject that). `src/oppo/UpdateSection.kt` only shows the version. Signed with the release key in `~/.tooodo/` (`release-signing.properties` + `tooodo-release.jks`, outside the repo; losing them means the store listing can never be updated). Build with `scripts/build-store.sh` → `Tooodo-store.apk`, which refuses debug-signed or networked output.
-
-The two builds have different signatures, so a phone can't switch channels without uninstalling.
-
 ```bash
-JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew assembleGiteeRelease
-cp app/build/outputs/apk/gitee/release/app-gitee-release.apk Tooodo.apk   # deliverable kept at repo root
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew assembleRelease
+cp app/build/outputs/apk/release/app-release.apk Tooodo.apk   # deliverable kept at repo root
 ```
 
 - SDK: `/opt/homebrew/share/android-commandlinetools` (set in `local.properties`); adb is `$SDK/platform-tools/adb`.
-- `gitee` release builds are signed with the **debug key** (`~/.android/debug.keystore`) so they can be sideloaded and upgraded in place. Losing that key means the phone must uninstall (and lose its todos) to upgrade.
+- Release builds are signed with the **debug key** (`~/.android/debug.keystore`) so they can be sideloaded and upgraded in place. Losing that key means the phone must uninstall (and lose its todos) to upgrade.
 - Bump `versionCode`/`versionName` in `app/build.gradle.kts` for every APK handed to the user. `versionName` restarted at `0.1.0`, but `versionCode` must only ever increase (it was already 10 before the reset), or the phone can't upgrade in place.
 
 ## In-app updates
@@ -35,7 +28,7 @@ cp app/build/outputs/apk/gitee/release/app-gitee-release.apk Tooodo.apk   # deli
 - Builds before `REPO` was set (versionCode ≤ 11) can't find updates, so the first build with it has to be installed via adb.
 - A Gitee release needs a branch to point at, so the repo must have at least one pushed commit before the first `scripts/release.sh`.
 - Publish with `scripts/release.sh "更新说明"` after bumping the version. It reads the Gitee token from `~/.gitee/token` and never prints it.
-- Unit tests cover only the pure date logic (`TodoStore.pendingOn/historyOn/upcomingOn`, `Dates`): `JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew testGiteeReleaseUnitTest` (the `Updater` parsing tests are in `src/testGitee/`). Keep that logic free of Android types so it stays testable. No lint config; everything else is verified on a device or emulator (below).
+- Unit tests cover only the pure date logic (`TodoStore.pendingOn/historyOn/upcomingOn`, `Dates`): `JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew testReleaseUnitTest`. Keep that logic free of Android types so it stays testable. No lint config; everything else is verified on a device or emulator (below).
 
 ## Testing on emulator / real phone
 
@@ -62,5 +55,4 @@ The core feature spans several components and works around OEM (realme/OPPO/Colo
   - `BootReceiver` handles `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED`.
   - None of these survive a **force-stop**. On realme the alarm restart also needs the user to enable 自启动 (otherwise logcat shows `OplusAppStartupManager: prevent start`), plus 允许后台行为.
 - **`TodoStore`**: SharedPreferences holding a JSON array of todos plus flags. `wakeEnabled` defaults to **true**. `permPrompted` makes the first-add permission dialog in `MainActivity` (notifications, then overlay settings) appear only once.
-- **Privacy consent** (`Privacy`, required by the app stores): on first launch `MainActivity` shows the consent dialog; until `TodoStore.privacyAgreed` is true, `ScreenWatchService.sync` and `WakeActivity.warmUp` do nothing and no permission is requested. The policy text is `docs/privacy/privacy.md`, packaged as the asset `privacy.md` and also the public URL `Privacy.URL` given to the store, so edit only that file and keep it in sync with the manifest's permissions.
 - **`Perms`**: checks for the notification and overlay permissions. **`Insets.padForSystemBars()`** must be applied to every activity root, because targetSdk 35 forces edge-to-edge.

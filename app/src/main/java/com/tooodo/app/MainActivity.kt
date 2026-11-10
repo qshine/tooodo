@@ -107,12 +107,6 @@ class MainActivity : AppCompatActivity() {
         val list = findViewById<RecyclerView>(R.id.list)
         list.layoutManager = LinearLayoutManager(this)
         list.adapter = adapter
-
-        // 第一次打开先征得同意；同意之前 sync/warmUp 什么都不做
-        Privacy.ensureAgreed(this) {
-            ScreenWatchService.sync(this)
-            WakeActivity.warmUp(this)
-        }
     }
 
     override fun onResume() {

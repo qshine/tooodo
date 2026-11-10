@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 打包 gitee 渠道（侧载版）并发布到 Gitee，手机上「设置 → 检查更新」就能拿到；有 github 远程时再同步一份到 GitHub。
+# 打包并发布到 Gitee，手机上「设置 → 检查更新」就能拿到；有 github 远程时再同步一份到 GitHub。
 #   scripts/release.sh "这一版的更新说明"
 # 发布前先在 app/build.gradle.kts 里调高 versionCode（和 versionName）。
 # Gitee 私人令牌放在 ~/.gitee/token（需要 projects 权限），脚本不会打印它。
@@ -12,7 +12,7 @@ TOKEN_FILE="$HOME/.gitee/token"
 TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
 
 # 仓库地址只在 Updater.kt 里写一次
-REPO="$(sed -n 's/.*const val REPO = "\(.*\)".*/\1/p' app/src/gitee/java/com/tooodo/app/Updater.kt)"
+REPO="$(sed -n 's/.*const val REPO = "\(.*\)".*/\1/p' app/src/main/java/com/tooodo/app/Updater.kt)"
 case "$REPO" in OWNER/*) echo "先在 Updater.kt 里把 REPO 改成你的 Gitee 仓库" >&2; exit 1;; esac
 CODE="$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts)"
 NAME="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)"
@@ -28,8 +28,8 @@ except Exception: print("")')"
 if [ "$LATEST_TAG" = "$TAG" ]; then echo "$TAG 已经发布过了，先调高版本号" >&2; exit 1; fi
 
 echo "打包 $NAME ($CODE)…"
-JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew -q testGiteeReleaseUnitTest assembleGiteeRelease
-cp app/build/outputs/apk/gitee/release/app-gitee-release.apk Tooodo.apk
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew -q testReleaseUnitTest assembleRelease
+cp app/build/outputs/apk/release/app-release.apk Tooodo.apk
 
 OUT="build/release"
 rm -rf "$OUT"; mkdir -p "$OUT"
