@@ -193,7 +193,8 @@ class ScreenWatchService : Service() {
         /** 按设置启动/停止服务，或刷新它的通知。 */
         fun sync(context: Context) {
             val intent = Intent(context, ScreenWatchService::class.java)
-            if (TodoStore(context).wakeEnabled) {
+            val store = TodoStore(context)
+            if (store.wakeEnabled && store.privacyAgreed) {
                 try {
                     ContextCompat.startForegroundService(context, intent)
                 } catch (e: IllegalStateException) {

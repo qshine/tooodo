@@ -83,4 +83,14 @@
     <string name="update_perm_title">允许安装更新</string>
     <string name="update_perm_msg">更新需要允许 Tooodo「安装未知应用」。在接下来的页面里打开开关，返回后会继续下载。</string>
     <string name="update_install_failed">安装失败：%s</string>
+    <string name="version_title">当前版本</string>
+    <string name="version_store">%s · 更新请前往应用商店</string>
+
+    <string name="privacy_title">隐私政策</string>
+    <string name="privacy_consent_title">欢迎使用 Tooodo</string>
+    <string name="privacy_consent_msg">使用前请阅读《隐私政策》。简单来说：\n\n· 你的待办只保存在这台手机上，不会上传，也没有账号。\n· 通知、悬浮窗（显示在其他应用上层）等权限只用来在锁屏上显示未完成的待办，都会在你用到时再询问。\n· 不接入任何统计、广告或第三方 SDK。\n\n点「同意」即表示你已阅读并同意《隐私政策》。</string>
+    <string name="privacy_read_full">查看全文</string>
+    <string name="privacy_agree">同意</string>
+    <string name="privacy_disagree">不同意并退出</string>
+    <string name="privacy_close">关闭</string>
 </resources>

@@ -142,7 +142,8 @@ class WakeActivity : AppCompatActivity() {
 
         /** 后台还没有提醒界面就预先建一个（应用在前台时，或服务在熄屏时调用）。 */
         fun warmUp(context: Context) {
-            if (alive || !TodoStore(context).wakeEnabled) return
+            val store = TodoStore(context)
+            if (alive || !store.wakeEnabled || !store.privacyAgreed) return
             val intent = Intent(context, WakeActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 .putExtra(EXTRA_WARM_UP, true)

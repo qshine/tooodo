@@ -10,9 +10,7 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <!-- 只用于设置里的「检查更新」 -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- 联网和安装更新只在 gitee 渠道（src/gitee/AndroidManifest.xml），商店版不联网 -->
 
     <application
         android:allowBackup="true"
@@ -60,10 +58,6 @@
 
         <receiver
             android:name=".RestartReceiver"
-            android:exported="false" />
-
-        <receiver
-            android:name=".InstallReceiver"
             android:exported="false" />
 
         <receiver
