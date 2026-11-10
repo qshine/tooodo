@@ -9,15 +9,15 @@
 | 应用名称 | Tooodo |
 | 包名 | com.tooodo.app |
 | 版本 | 0.2.0（versionCode 15） |
-| 分类 | 效率办公 / 工具（选商店里最接近「待办 / 效率」的那一类） |
+| 分类 | 办公软件 → 效率（「实用工具」要额外提供行业资质） |
 | 年龄分级 | 全年龄（3+） |
 | 资费 | 免费，无内购，无广告 |
-| 隐私政策网址 | https://gitee.com/qqinling/tooodo/blob/main/docs/privacy/privacy.md |
+| 隐私政策网址 | 必须是静态 HTML 页面（OPPO 不接受 GitHub、Gitee 这类代码托管链接）：把 `docs/privacy/privacy.html` 放到你自己的网站或静态托管上，填那个网址 |
 | 客服 / 反馈 | https://gitee.com/qqinling/tooodo/issues |
 | 图标 | icon-512.png（512×512） |
-| 截图 | screenshot-1 ~ 4（1080×2400，按编号顺序上传） |
+| 截图 | `oppo-1080x1920/` 里的 4 张（OPPO 要求 1080×1920、小于 1M，按编号顺序上传） |
 
-## 一句话简介（≤ 15 字）
+## 一句话简介（≤ 13 字，不能有标点和空格）
 
 解锁前，先看一眼没做完的事
 

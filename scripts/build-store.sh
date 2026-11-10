@@ -7,6 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 [ -s "$HOME/.tooodo/release-signing.properties" ] || { echo "缺少 ~/.tooodo/release-signing.properties（正式签名）" >&2; exit 1; }
 
+python3 -I scripts/privacy-html.py >/dev/null   # 隐私政策网页和 APK 内的文字保持一致
 JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./gradlew -q testOppoReleaseUnitTest assembleOppoRelease
 APK=app/build/outputs/apk/oppo/release/app-oppo-release.apk
 
