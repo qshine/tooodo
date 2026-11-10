@@ -4,6 +4,12 @@
 
 Tooodo 是一个把未完成待办放在锁屏上的待办应用。每次亮屏，还没解锁，今天要做的事就已经摆在眼前，不用专门打开应用，也不会忘。
 
+<p align="center">
+  <img src="docs/screenshots/main.jpg" alt="主界面：今天要做" width="260">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/lockscreen.jpg" alt="锁屏提醒：你还有 1 件事" width="260">
+</p>
+
 ## 功能
 
 - **锁屏提醒**：亮屏时直接在锁屏上列出未完成的待办，点一下就能完成，解锁后自动消失。全部做完就不再打扰。
