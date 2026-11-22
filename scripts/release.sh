@@ -46,7 +46,7 @@ print(json.dumps({
 PY
 
 BRANCH="$(curl -fsS "$API?access_token=$TOKEN" | python3 -c 'import sys,json; print(json.load(sys.stdin)["default_branch"])')"
-echo "创建发布 $TAG…"
+echo "创建发布 ${TAG}…"
 RELEASE_ID="$(curl -fsS -X POST "$API/releases" \
   --data-urlencode "access_token=$TOKEN" --data-urlencode "tag_name=$TAG" --data-urlencode "name=Tooodo $NAME" \
   --data-urlencode "body=$NOTES" --data-urlencode "target_commitish=$BRANCH" --data-urlencode "prerelease=false" \
@@ -61,7 +61,7 @@ echo "完成：https://gitee.com/$REPO/releases/tag/$TAG"
 # GitHub 镜像：同样的文件再发一份（应用内更新仍只看 Gitee）。没有 github 远程或 gh 就跳过
 if git remote get-url github >/dev/null 2>&1 && command -v gh >/dev/null; then
   GH_REPO="$(git remote get-url github | sed -E 's#(https://github.com/|git@github.com:)##; s#\.git$##')"
-  echo "同步到 GitHub $GH_REPO…"
+  echo "同步到 GitHub ${GH_REPO}…"
   git fetch -q origin "refs/tags/$TAG:refs/tags/$TAG"
   git push -q github "$BRANCH" "refs/tags/$TAG"
   gh release create "$TAG" -R "$GH_REPO" --verify-tag --latest --title "Tooodo $NAME" --notes "$NOTES" \
