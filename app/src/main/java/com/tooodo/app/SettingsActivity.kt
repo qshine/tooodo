@@ -93,14 +93,29 @@ class SettingsActivity : AppCompatActivity() {
         val list = findViewById<LinearLayout>(R.id.saved_tags)
         list.removeAllViews()
         store.tags().forEach { tag ->
-            list.addView(TextView(this).apply {
+            val row = layoutInflater.inflate(R.layout.item_tag, list, false)
+            row.findViewById<TextView>(R.id.tag_name).apply {
                 text = tag.name
-                textSize = 14f
                 setTextColor(tag.color)
-                val padding = (6 * resources.displayMetrics.density).toInt()
-                setPadding(0, padding, 0, padding)
-            })
+            }
+            row.findViewById<Button>(R.id.delete_tag).apply {
+                contentDescription = getString(R.string.delete_tag_description, tag.name)
+                setOnClickListener { confirmDeleteTag(tag) }
+            }
+            list.addView(row)
         }
+    }
+
+    private fun confirmDeleteTag(tag: TaskTag) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.delete_tag_title, tag.name))
+            .setMessage(R.string.delete_tag_message)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                store.deleteTag(tag.id)
+                renderTags()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun showAddTag() {

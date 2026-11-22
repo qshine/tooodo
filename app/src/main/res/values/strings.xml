@@ -88,4 +88,7 @@
     <string name="tag_name">标签名称</string>
     <string name="tag_exists">这个标签已存在</string>
     <string name="untagged">无标签</string>
+    <string name="delete_tag_description">删除标签「%s」</string>
+    <string name="delete_tag_title">删除标签「%s」？</string>
+    <string name="delete_tag_message">相关待办会保留，并变为「无标签」。</string>
 </resources>

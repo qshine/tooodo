@@ -1,6 +1,7 @@
 package com.tooodo.app
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Color
 import org.json.JSONArray
 import org.json.JSONObject
@@ -50,8 +51,10 @@ data class Todo(
 }
 
 /** 待办和设置都存在 SharedPreferences 里，数据量很小，够用。 */
-class TodoStore(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("tooodo", Context.MODE_PRIVATE)
+class TodoStore internal constructor(private val prefs: SharedPreferences) {
+    constructor(context: Context) : this(
+        context.applicationContext.getSharedPreferences("tooodo", Context.MODE_PRIVATE),
+    )
 
     fun all(): List<Todo> {
         val arr = JSONArray(prefs.getString(KEY_TODOS, "[]"))
@@ -71,16 +74,33 @@ class TodoStore(context: Context) {
         val tags = tags()
         if (trimmed.isEmpty() || tags.any { it.name.equals(trimmed, ignoreCase = true) }) return false
 
-        val id = tags.size + 1
+        val id = nextTagId(tags)
         val color = TAG_COLORS.getOrNull(id - 1)
             ?: Color.HSVToColor(floatArrayOf((id * 137.508f) % 360, 0.8f, 0.48f))
-        val arr = JSONArray()
-        (tags + TaskTag(id, trimmed, color)).forEach {
-            arr.put(JSONObject().put("id", it.id).put("name", it.name).put("color", it.color))
-        }
-        prefs.edit().putString(KEY_TAGS, arr.toString()).apply()
+        prefs.edit()
+            .putString(KEY_TAGS, encodeTags(tags + TaskTag(id, trimmed, color)))
+            .putInt(KEY_NEXT_TAG_ID, id + 1)
+            .apply()
         return true
     }
+
+    /** 删除标签时保留待办，只去掉关联；两份数据一起保存。 */
+    fun deleteTag(id: Int) {
+        val tags = tags()
+        if (tags.none { it.id == id }) return
+        val todos = all().map { if (it.tagId == id) it.copy(tagId = null) else it }
+        prefs.edit()
+            .putString(KEY_TAGS, encodeTags(tags.filterNot { it.id == id }))
+            .putString(KEY_TODOS, encodeTodos(todos))
+            // 旧版本没有计数器，删除最高 ID 前先保留它，避免以后重用。
+            .putInt(KEY_NEXT_TAG_ID, nextTagId(tags))
+            .apply()
+    }
+
+    private fun nextTagId(tags: List<TaskTag>): Int =
+        maxOf(prefs.getInt(KEY_NEXT_TAG_ID, 1), (tags.maxOfOrNull { it.id } ?: 0) + 1)
+
+    private fun existingTagId(id: Int?): Int? = id?.takeIf { tagId -> tags().any { it.id == tagId } }
 
     fun pending(): List<Todo> = pendingOn(all(), today())
 
@@ -93,7 +113,7 @@ class TodoStore(context: Context) {
         tagId: Int? = null,
     ) {
         val d = if (repeat == Repeat.ONCE) day else today()
-        save(all() + Todo(System.currentTimeMillis(), text, repeat, weekdays, d, tagId = tagId))
+        save(all() + Todo(System.currentTimeMillis(), text, repeat, weekdays, d, tagId = existingTagId(tagId)))
     }
 
     fun toggle(id: Long) {
@@ -124,7 +144,7 @@ class TodoStore(context: Context) {
     fun restore(index: Int, todo: Todo) {
         val todos = all().toMutableList()
         if (todos.any { it.id == todo.id }) return
-        todos.add(index.coerceIn(0, todos.size), todo)
+        todos.add(index.coerceIn(0, todos.size), todo.copy(tagId = existingTagId(todo.tagId)))
         save(todos)
     }
 
@@ -151,6 +171,18 @@ class TodoStore(context: Context) {
         set(v) = prefs.edit().putBoolean(KEY_PERM_PROMPTED, v).apply()
 
     private fun save(todos: List<Todo>) {
+        prefs.edit().putString(KEY_TODOS, encodeTodos(todos)).apply()
+    }
+
+    private fun encodeTags(tags: List<TaskTag>): String {
+        val arr = JSONArray()
+        tags.forEach {
+            arr.put(JSONObject().put("id", it.id).put("name", it.name).put("color", it.color))
+        }
+        return arr.toString()
+    }
+
+    private fun encodeTodos(todos: List<Todo>): String {
         val arr = JSONArray()
         todos.forEach {
             arr.put(
@@ -160,7 +192,7 @@ class TodoStore(context: Context) {
                     .put("day", it.day).put("doneDay", it.doneDay).put("tagId", it.tagId)
             )
         }
-        prefs.edit().putString(KEY_TODOS, arr.toString()).apply()
+        return arr.toString()
     }
 
     private fun parse(o: JSONObject): Todo {
@@ -185,6 +217,7 @@ class TodoStore(context: Context) {
             0xFF9B3254.toInt(), 0xFF16666B.toInt(), 0xFF695518.toInt(), 0xFF97362E.toInt(),
         )
         private const val KEY_TAGS = "tags"
+        private const val KEY_NEXT_TAG_ID = "next_tag_id"
         private const val KEY_TODOS = "todos"
         private const val KEY_WAKE = "wake_enabled"
         private const val KEY_SKIP_EMPTY = "skip_when_empty"

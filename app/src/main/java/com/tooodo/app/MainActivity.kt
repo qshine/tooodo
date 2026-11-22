@@ -132,6 +132,7 @@ class MainActivity : AppCompatActivity() {
     private fun renderTagPicker() {
         val tags = store.tags()
         tagsById = tags.associateBy { it.id }
+        selectedTagId = selectedTagId?.takeIf { it in tagsById }
         val picker = findViewById<View>(R.id.new_task_tags)
         val options = picker.findViewById<LinearLayout>(R.id.tag_options)
         picker.visibility = if (tags.isEmpty()) View.GONE else View.VISIBLE
