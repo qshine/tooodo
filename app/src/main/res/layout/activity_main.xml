@@ -164,6 +164,13 @@
         android:orientation="horizontal"
         android:visibility="gone" />
 
+    <include
+        android:id="@+id/new_task_tags"
+        layout="@layout/row_tags"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"

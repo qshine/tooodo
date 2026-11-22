@@ -1,11 +1,14 @@
 package com.tooodo.app
 
 import android.content.Context
+import android.graphics.Color
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+
+data class TaskTag(val id: Int, val name: String, val color: Int)
 
 enum class Repeat { ONCE, DAILY, WEEKLY }
 
@@ -23,6 +26,7 @@ data class Todo(
     val day: Long,
     val done: Boolean = false,
     val doneDay: Long = -1,
+    val tagId: Int? = null,
 ) {
     fun isDueOn(d: Long): Boolean = when (repeat) {
         Repeat.ONCE -> day == d
@@ -54,12 +58,42 @@ class TodoStore(context: Context) {
         return (0 until arr.length()).map { parse(arr.getJSONObject(it)) }
     }
 
+    fun tags(): List<TaskTag> {
+        val arr = JSONArray(prefs.getString(KEY_TAGS, "[]"))
+        return (0 until arr.length()).map { index ->
+            val tag = arr.getJSONObject(index)
+            TaskTag(tag.getInt("id"), tag.getString("name"), tag.getInt("color"))
+        }
+    }
+
+    fun addTag(name: String): Boolean {
+        val trimmed = name.trim()
+        val tags = tags()
+        if (trimmed.isEmpty() || tags.any { it.name.equals(trimmed, ignoreCase = true) }) return false
+
+        val id = tags.size + 1
+        val color = TAG_COLORS.getOrNull(id - 1)
+            ?: Color.HSVToColor(floatArrayOf((id * 137.508f) % 360, 0.8f, 0.48f))
+        val arr = JSONArray()
+        (tags + TaskTag(id, trimmed, color)).forEach {
+            arr.put(JSONObject().put("id", it.id).put("name", it.name).put("color", it.color))
+        }
+        prefs.edit().putString(KEY_TAGS, arr.toString()).apply()
+        return true
+    }
+
     fun pending(): List<Todo> = pendingOn(all(), today())
 
     /** [day] 只对单次任务有意义，可以是今天以后的某天；周期任务总是从今天开始。 */
-    fun add(text: String, repeat: Repeat = Repeat.ONCE, weekdays: Set<Int> = emptySet(), day: Long = today()) {
+    fun add(
+        text: String,
+        repeat: Repeat = Repeat.ONCE,
+        weekdays: Set<Int> = emptySet(),
+        day: Long = today(),
+        tagId: Int? = null,
+    ) {
         val d = if (repeat == Repeat.ONCE) day else today()
-        save(all() + Todo(System.currentTimeMillis(), text, repeat, weekdays, d))
+        save(all() + Todo(System.currentTimeMillis(), text, repeat, weekdays, d, tagId = tagId))
     }
 
     fun toggle(id: Long) {
@@ -123,7 +157,7 @@ class TodoStore(context: Context) {
                 JSONObject()
                     .put("id", it.id).put("text", it.text).put("done", it.done)
                     .put("repeat", it.repeat.name).put("weekdays", JSONArray(it.weekdays.sorted()))
-                    .put("day", it.day).put("doneDay", it.doneDay)
+                    .put("day", it.day).put("doneDay", it.doneDay).put("tagId", it.tagId)
             )
         }
         prefs.edit().putString(KEY_TODOS, arr.toString()).apply()
@@ -141,10 +175,16 @@ class TodoStore(context: Context) {
             day = if (o.has("day")) o.getLong("day") else dayOf(id),
             done = o.optBoolean("done"),
             doneDay = o.optLong("doneDay", -1),
+            tagId = if (o.isNull("tagId")) null else o.getInt("tagId"),
         )
     }
 
     companion object {
+        private val TAG_COLORS = listOf(
+            0xFF2453A6.toInt(), 0xFF226546.toInt(), 0xFF8F431A.toInt(), 0xFF743C99.toInt(),
+            0xFF9B3254.toInt(), 0xFF16666B.toInt(), 0xFF695518.toInt(), 0xFF97362E.toInt(),
+        )
+        private const val KEY_TAGS = "tags"
         private const val KEY_TODOS = "todos"
         private const val KEY_WAKE = "wake_enabled"
         private const val KEY_SKIP_EMPTY = "skip_when_empty"
@@ -162,6 +202,13 @@ class TodoStore(context: Context) {
         /** 历史任务 = 以前日子的单次任务（不管完成没有）。 */
         fun historyOn(todos: List<Todo>, t: Long): List<Todo> =
             todos.filter { it.repeat == Repeat.ONCE && it.day < t }
+
+        /** 有未完成任务的日期优先，同一类日期按时间倒序。 */
+        fun historyByDay(todos: List<Todo>, today: Long): List<Map.Entry<Long, List<Todo>>> =
+            historyOn(todos, today).groupBy { it.day }.entries.sortedWith(
+                compareBy<Map.Entry<Long, List<Todo>>> { (_, tasks) -> tasks.all { it.done } }
+                    .thenByDescending { it.key }
+            )
 
         /** 以后的任务 = 安排在今天以后的单次任务，到那天自动进入「未完成」。 */
         fun upcomingOn(todos: List<Todo>, t: Long): List<Todo> =

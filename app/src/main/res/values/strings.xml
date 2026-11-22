@@ -83,4 +83,9 @@
     <string name="update_perm_title">允许安装更新</string>
     <string name="update_perm_msg">更新需要允许 Tooodo「安装未知应用」。在接下来的页面里打开开关，返回后会继续下载。</string>
     <string name="update_install_failed">安装失败：%s</string>
+    <string name="tags">任务标签</string>
+    <string name="add_tag">新建标签</string>
+    <string name="tag_name">标签名称</string>
+    <string name="tag_exists">这个标签已存在</string>
+    <string name="untagged">无标签</string>
 </resources>

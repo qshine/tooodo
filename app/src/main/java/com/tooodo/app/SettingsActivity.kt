@@ -10,7 +10,9 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -36,6 +38,8 @@ class SettingsActivity : AppCompatActivity() {
         store = TodoStore(this)
 
         findViewById<ImageButton>(R.id.back).setOnClickListener { finish() }
+        findViewById<Button>(R.id.add_tag).setOnClickListener { showAddTag() }
+        renderTags()
 
         wakeSwitch = findViewById(R.id.switch_wake)
         wakeSwitch.isChecked = store.wakeEnabled
@@ -82,6 +86,42 @@ class SettingsActivity : AppCompatActivity() {
         if (release != null && packageManager.canRequestPackageInstalls()) {
             waitingForInstallPerm = null
             download(release)
+        }
+    }
+
+    private fun renderTags() {
+        val list = findViewById<LinearLayout>(R.id.saved_tags)
+        list.removeAllViews()
+        store.tags().forEach { tag ->
+            list.addView(TextView(this).apply {
+                text = tag.name
+                textSize = 14f
+                setTextColor(tag.color)
+                val padding = (6 * resources.displayMetrics.density).toInt()
+                setPadding(0, padding, 0, padding)
+            })
+        }
+    }
+
+    private fun showAddTag() {
+        val view = layoutInflater.inflate(R.layout.dialog_add_tag, null)
+        val input = view.findViewById<EditText>(R.id.tag_name)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.add_tag)
+            .setView(view)
+            .setPositiveButton(R.string.save, null)
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val name = input.text.toString().trim()
+            when {
+                name.isEmpty() -> input.error = getString(R.string.empty_text)
+                !store.addTag(name) -> input.error = getString(R.string.tag_exists)
+                else -> {
+                    renderTags()
+                    dialog.dismiss()
+                }
+            }
         }
     }
 

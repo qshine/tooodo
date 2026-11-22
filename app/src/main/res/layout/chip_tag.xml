@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.AppCompatCheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Chip"
+    android:layout_height="48dp"
+    android:ellipsize="end"
+    android:gravity="center_vertical"
+    android:maxWidth="240dp"
+    android:paddingStart="8dp"
+    android:singleLine="true" />

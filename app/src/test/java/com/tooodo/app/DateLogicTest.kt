@@ -59,6 +59,23 @@ class DateLogicTest {
     }
 
     @Test
+    fun historyGroups_prioritizeDatesWithUnfinishedTasksAndSortNewestFirst() {
+        val mixedDay = listOf(once(today - 2, done = true), once(today - 2))
+        val todos = listOf(
+            once(today - 3, done = true),
+            once(today - 4),
+            once(today - 1, done = true),
+            once(today),
+            once(today + 1),
+        ) + mixedDay
+
+        val groups = TodoStore.historyByDay(todos, today)
+
+        assertEquals(listOf(today - 2, today - 4, today - 1, today - 3), groups.map { it.key })
+        assertEquals(mixedDay, groups.first().value)
+    }
+
+    @Test
     fun daily_resetsEachDay() {
         val notYet = Todo(id = 1, text = "x", repeat = Repeat.DAILY, day = today)
         val doneToday = notYet.copy(doneDay = today)

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
@@ -25,6 +26,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
@@ -43,6 +45,9 @@ class MainActivity : AppCompatActivity() {
 
     // 单次待办安排在哪天，默认今天
     private lateinit var due: DueChips
+    private var tagsById = emptyMap<Int, TaskTag>()
+    private var selectedTagId: Int? = null
+    private val tagChips = mutableMapOf<Int, AppCompatCheckBox>()
 
     // 删除后的「撤销」
     private var lastDeleted: Pair<Int, Todo>? = null
@@ -62,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         findViewById<View>(R.id.root).padForSystemBars()
         store = TodoStore(this)
+        selectedTagId = savedInstanceState?.getInt("selected_tag")?.takeIf { it > 0 }
 
         findViewById<TextView>(R.id.date).text = todayLabel()
         findViewById<ImageButton>(R.id.settings).setOnClickListener {
@@ -77,7 +83,9 @@ class MainActivity : AppCompatActivity() {
                 return@add
             }
             val today = TodoStore.today()
-            store.add(text, repeat, weekdays.toSet(), due.day)
+            store.add(text, repeat, weekdays.toSet(), due.day, selectedTagId)
+            tagChips[selectedTagId]?.isChecked = false
+            selectedTagId = null
             // 排到以后的不会出现在「未完成」里，提示一下去哪了
             if (repeat == Repeat.ONCE && due.day > today) {
                 Toast.makeText(this, getString(R.string.added_to, Dates.dayLabel(due.day, today)), Toast.LENGTH_SHORT).show()
@@ -111,8 +119,41 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        renderTagPicker()
         refresh()
         WakeActivity.warmUp(this)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        selectedTagId?.let { outState.putInt("selected_tag", it) }
+    }
+
+    private fun renderTagPicker() {
+        val tags = store.tags()
+        tagsById = tags.associateBy { it.id }
+        val picker = findViewById<View>(R.id.new_task_tags)
+        val options = picker.findViewById<LinearLayout>(R.id.tag_options)
+        picker.visibility = if (tags.isEmpty()) View.GONE else View.VISIBLE
+        options.removeAllViews()
+        tagChips.clear()
+        tags.forEach { tag ->
+            val chip = layoutInflater.inflate(R.layout.chip_tag, options, false) as AppCompatCheckBox
+            chip.text = tag.name
+            chip.setTextColor(tag.color)
+            chip.buttonTintList = ColorStateList.valueOf(tag.color)
+            chip.isChecked = selectedTagId == tag.id
+            chip.setOnClickListener {
+                if (chip.isChecked) {
+                    tagChips[selectedTagId]?.isChecked = false
+                    selectedTagId = tag.id
+                } else {
+                    selectedTagId = null
+                }
+            }
+            tagChips[tag.id] = chip
+            options.addView(chip)
+        }
     }
 
     // ---------- 重复方式 ----------
@@ -284,8 +325,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 分栏：今天未完成 → 今天已完成 → 以后要做（排到以后的单次任务，按日期分组，近的在上）→ 历史任务（以前日子的单次任务，按日期分组，最近的在上）
-     * → 今天不用做的周期任务（方便查看和删除）。
+     * 今天待办按标签分组，未来待办先按日期再按标签。历史日期优先显示有未完成任务的日期。
      */
     private fun refresh() {
         // 应用可能跨天一直开着，日期跟着列表一起刷新
@@ -295,15 +335,15 @@ class MainActivity : AppCompatActivity() {
         val dueToday = all.filter { it.isDueOn(today) }
         val pending = dueToday.filter { !it.isDoneOn(today) }
         val done = dueToday.filter { it.isDoneOn(today) }
-        val upcoming = store.upcoming()
+        val upcoming = TodoStore.upcomingOn(all, today)
         val upcomingByDay = upcoming.groupBy { it.day }.toSortedMap()
-        val historyByDay = store.history().groupBy { it.day }.toSortedMap(reverseOrder())
+        val historyByDay = TodoStore.historyByDay(all, today)
         val otherRecurring = all.filter { it.repeat != Repeat.ONCE && !it.isDueOn(today) }
 
         val rows = mutableListOf<Row>()
         rows += Row.Header(getString(R.string.section_pending, pending.size))
         if (pending.isEmpty()) rows += Row.Empty
-        pending.forEach { rows += Row.Item(it, done = false) }
+        addPendingRows(rows, pending)
         if (done.isNotEmpty()) {
             rows += Row.Header(getString(R.string.section_done, done.size))
             done.forEach { rows += Row.Item(it, done = true) }
@@ -312,7 +352,9 @@ class MainActivity : AppCompatActivity() {
             rows += Row.Header(getString(R.string.section_upcoming, upcoming.count { !it.done }))
             upcomingByDay.forEach { (day, todos) ->
                 rows += Row.Header(getString(R.string.section_upcoming_day, Dates.dayLabel(day, today), todos.count { !it.done }))
-                todos.sortedBy { it.done }.forEach { rows += Row.Item(it, done = it.done) }
+                val (open, completed) = todos.partition { !it.done }
+                addPendingRows(rows, open)
+                completed.forEach { rows += Row.Item(it, done = true) }
             }
         }
         if (historyByDay.isNotEmpty()) {
@@ -332,9 +374,32 @@ class MainActivity : AppCompatActivity() {
         ScreenWatchService.sync(this)
     }
 
+    private fun addPendingRows(rows: MutableList<Row>, todos: List<Todo>) {
+        if (tagsById.isEmpty()) {
+            todos.forEach { rows += Row.Item(it, done = false) }
+            return
+        }
+        val groups = todos.groupBy { todo -> todo.tagId?.let(tagsById::get) }
+        groups.entries.sortedBy { it.key?.id ?: Int.MAX_VALUE }.forEach { (tag, tasks) ->
+            rows += Row.Header(tag?.name ?: getString(R.string.untagged), color = tag?.color)
+            tasks.forEach { rows += Row.Item(it, done = false, showTag = false) }
+        }
+    }
+
     private sealed class Row {
-        data class Header(val text: String, val action: String? = null, val onAction: (() -> Unit)? = null) : Row()
-        data class Item(val todo: Todo, val done: Boolean, val checkable: Boolean = true) : Row()
+        data class Header(
+            val text: String,
+            val action: String? = null,
+            val color: Int? = null,
+            val onAction: (() -> Unit)? = null,
+        ) : Row()
+
+        data class Item(
+            val todo: Todo,
+            val done: Boolean,
+            val checkable: Boolean = true,
+            val showTag: Boolean = true,
+        ) : Row()
         object Empty : Row()
     }
 
@@ -368,7 +433,10 @@ class MainActivity : AppCompatActivity() {
             val v = holder.itemView
             when (val row = rows[position]) {
                 is Row.Header -> {
-                    v.findViewById<TextView>(R.id.title).text = row.text
+                    v.findViewById<TextView>(R.id.title).apply {
+                        text = row.text
+                        setTextColor(row.color ?: getColor(R.color.ink_muted))
+                    }
                     val action = v.findViewById<Button>(R.id.action)
                     action.visibility = if (row.action != null && !selecting) View.VISIBLE else View.GONE
                     action.text = row.action
@@ -388,6 +456,13 @@ class MainActivity : AppCompatActivity() {
             text.text = todo.text
             meta.text = todo.repeatLabel
             meta.visibility = if (todo.repeatLabel != null) View.VISIBLE else View.GONE
+
+            val tag = if (row.showTag) todo.tagId?.let(tagsById::get) else null
+            v.findViewById<TextView>(R.id.task_tag).apply {
+                visibility = if (tag == null) View.GONE else View.VISIBLE
+                this.text = tag?.name
+                tag?.let { setTextColor(it.color) }
+            }
 
             // 多选时圆圈表示「选中」，否则表示「完成」
             val isSelected = todo.id in selected

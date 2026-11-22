@@ -42,6 +42,14 @@
             android:textColor="@color/accent"
             android:textSize="12sp"
             android:visibility="gone" />
+        <TextView
+            android:id="@+id/task_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
     </LinearLayout>
 
     <ImageButton
